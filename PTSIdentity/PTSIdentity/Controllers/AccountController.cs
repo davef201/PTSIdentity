@@ -75,11 +75,11 @@ namespace PTSIdentity.Controllers
 
             // This doesn't count login failures towards account lockout
             // To enable password failures to trigger account lockout, change to shouldLockout: true
-            var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+            var result = await SignInManager.PasswordSignInAsync(model.Username, model.Password, model.RememberMe, shouldLockout: false);
             switch (result)
             {
                 case SignInStatus.Success:
-                    return RedirectToLocal(returnUrl);
+                    return RedirectToAction("DisplayUserInfo");
                 case SignInStatus.LockedOut:
                     return View("Lockout");
                 case SignInStatus.RequiresVerification:
@@ -151,10 +151,11 @@ namespace PTSIdentity.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Username, Email = model.Email, PostCode = model.PostCode, FirstName = model.FirstName, Surname = model.Surname };
+                var user = new ApplicationUser { UserName = model.Username, Email = model.Email, PostCode = model.PostCode, FirstName = model.FirstName, Surname = model.Surname, PhoneNumber = model.PhoneNumber };
                 var result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    await _userManager.AddClaimAsync(user.Id, new Claim("FullName", user.FirstName + " " + user.Surname));
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
                     
                     // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
@@ -163,7 +164,7 @@ namespace PTSIdentity.Controllers
                     // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
                     // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("DisplayUserInfo");
                 }
                 AddErrors(result);
             }
@@ -172,6 +173,13 @@ namespace PTSIdentity.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public ActionResult DisplayUserInfo()
+        {
+            var userID = User.Identity.GetUserId();
+            ApplicationUser applicationUser = UserManager.FindById(userID);
+            return View(applicationUser);
+        }
 
         //
         // GET: /Account/ConfirmEmail
