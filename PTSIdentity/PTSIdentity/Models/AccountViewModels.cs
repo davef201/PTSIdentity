@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using PTSIdentity.CustomAttributes;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace PTSIdentity.Models
@@ -77,6 +78,7 @@ namespace PTSIdentity.Models
         [Required]
         [RegularExpression("^[a-zA-Z0-9\\s]+$")]
         [StringLength(10, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 5)]
+        [PostCode]
         public string PostCode { get; set; }
 
         [Required]
